@@ -301,7 +301,7 @@ public final class VirtualCore {
      */
     public void preOpt(String pkg) throws IOException {
         InstalledAppInfo info = getInstalledAppInfo(pkg, 0);
-        if (info != null && !info.dependSystem && !info.artFlyMode) {
+        if (info != null && !info.dependSystem && !info.skipDexOpt) {
             DexFile.loadDex(info.apkPath, info.getOdexFile().getPath(), 0).close();
         }
     }
@@ -532,7 +532,7 @@ public final class VirtualCore {
         return false;
     }
 
-    public Resources getResources(String pkg) {
+    public Resources getResources(String pkg) throws Resources.NotFoundException {
         InstalledAppInfo installedAppInfo = getInstalledAppInfo(pkg, 0);
         if (installedAppInfo != null) {
             AssetManager assets = mirror.android.content.res.AssetManager.ctor.newInstance();
@@ -540,7 +540,7 @@ public final class VirtualCore {
             Resources hostRes = context.getResources();
             return new Resources(assets, hostRes.getDisplayMetrics(), hostRes.getConfiguration());
         }
-        return null;
+        throw new Resources.NotFoundException(pkg);
     }
 
     public synchronized ActivityInfo resolveActivityInfo(Intent intent, int userId) {
