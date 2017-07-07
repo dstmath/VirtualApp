@@ -255,13 +255,22 @@ class MethodProxies {
                     new InvocationHandler() {
                         @Override
                         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                            String name = method.getName();
-                            if (name.equals("getMySessions")) {
-                                MethodParameterUtils.replaceFirstAppPkg(args);
-                            } else if (name.equals("createSession")) {
-                                MethodParameterUtils.replaceFirstAppPkg(args);
+                            try {
+                                return method.invoke(installer, args);
+                            } catch (Throwable e) {
+
                             }
-                            return method.invoke(installer, args);
+                            if (method.getReturnType() == int.class) {
+                                return 0;
+                            }
+                            if (method.getReturnType() == ParceledListSlice.TYPE) {
+                                return ParceledListSliceCompat.create(new ArrayList());
+                            }
+                            if (method.getReturnType() == void.class) {
+                                return 0;
+                            } else {
+                                return null;
+                            }
                         }
                     });
         }
@@ -447,21 +456,6 @@ class MethodProxies {
         }
 
     }
-
-
-    static class AddOnPermissionsChangeListener extends MethodProxy {
-
-        @Override
-        public String getMethodName() {
-            return "addOnPermissionsChangeListener";
-        }
-
-        @Override
-        public Object call(Object who, Method method, Object... args) throws Throwable {
-            return 0;
-        }
-    }
-
 
     @SuppressWarnings("unchecked")
     static class QueryIntentActivities extends MethodProxy {
@@ -840,7 +834,8 @@ class MethodProxies {
 
         @Override
         public Object call(Object who, Method method, Object... args) throws Throwable {
-            throw new RuntimeException("TODO");
+            int uid = (int) args[0];
+            return VPackageManager.get().getNameForUid(uid);
         }
     }
 
@@ -1177,19 +1172,6 @@ class MethodProxies {
     }
 
 
-    static class RemoveOnPermissionsChangeListener extends MethodProxy {
-
-        @Override
-        public String getMethodName() {
-            return "removeOnPermissionsChangeListener";
-        }
-
-        @Override
-        public Object call(Object who, Method method, Object... args) throws Throwable {
-            return 0;
-        }
-    }
-
     static class GetApplicationBlockedSettingAsUser extends MethodProxy {
 
         @Override
@@ -1203,4 +1185,5 @@ class MethodProxies {
             return method.invoke(who, args);
         }
     }
+
 }
