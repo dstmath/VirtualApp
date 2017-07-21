@@ -32,7 +32,7 @@ import com.lody.virtual.client.ipc.LocalProxyUtils;
 import com.lody.virtual.client.ipc.ServiceManagerNative;
 import com.lody.virtual.client.ipc.VActivityManager;
 import com.lody.virtual.client.ipc.VPackageManager;
-import com.lody.virtual.client.stub.StubManifest;
+import com.lody.virtual.client.stub.VASettings;
 import com.lody.virtual.helper.compat.BundleCompat;
 import com.lody.virtual.helper.utils.BitmapUtils;
 import com.lody.virtual.os.VUserHandle;
@@ -172,7 +172,7 @@ public final class VirtualCore {
             if (Looper.myLooper() != Looper.getMainLooper()) {
                 throw new IllegalStateException("VirtualCore.startup() must called in main thread.");
             }
-            StubManifest.STUB_CP_AUTHORITY = context.getPackageName() + "." + StubManifest.STUB_DEF_AUTHORITY;
+            VASettings.STUB_CP_AUTHORITY = context.getPackageName() + "." + VASettings.STUB_DEF_AUTHORITY;
             ServiceManagerNative.SERVICE_CP_AUTH = context.getPackageName() + "." + ServiceManagerNative.SERVICE_DEF_AUTH;
             this.context = context;
             mainThread = ActivityThread.currentActivityThread.call();
@@ -252,12 +252,11 @@ public final class VirtualCore {
     }
 
     private IAppManager getService() {
-        if (mService == null) {
+        if (mService == null
+                || (!VirtualCore.get().isVAppProcess() && !mService.asBinder().isBinderAlive())) {
             synchronized (this) {
-                if (mService == null) {
-                    Object remote = getStubInterface();
-                    mService = LocalProxyUtils.genProxy(IAppManager.class, remote);
-                }
+                Object remote = getStubInterface();
+                mService = LocalProxyUtils.genProxy(IAppManager.class, remote);
             }
         }
         return mService;
@@ -711,7 +710,8 @@ public final class VirtualCore {
         }
     }
 
-    public abstract static class PackageObserver extends IPackageObserver.Stub {}
+    public abstract static class PackageObserver extends IPackageObserver.Stub {
+    }
 
     public void registerObserver(IPackageObserver observer) {
         try {
