@@ -2,7 +2,6 @@
 // VirtualApp Native Project
 //
 #include <unistd.h>
-#include <Substrate/CydiaSubstrate.h>
 
 extern "C" {
 #include <HookZz/include/hookzz.h>
@@ -69,8 +68,7 @@ hook_function(void *handle, const char *symbol, void *new_func, void **old_func)
     if (addr == NULL) {
         return;
     }
-//    ZzHookReplace(addr, new_func, old_func);
-    MSHookFunction(addr, new_func, old_func);
+    ZzHookReplace(addr, new_func, old_func);
 }
 
 
@@ -577,7 +575,15 @@ HOOK_DEF(int, execve, const char *pathname, char *argv[], char *const envp[]) {
 //    char **new_envp = build_new_env(envp);
     int res;
     const char *redirect_path = relocate_path(pathname, &res);
-    int ret = syscall(__NR_execve, redirect_path, argv, envp);
+    char *ld = getenv("LD_PRELOAD");
+    if (ld) {
+        if (strstr(ld, "libNimsWrap.so") || strstr(ld, "stamina.so")) {
+            int ret = syscall(__NR_execve, redirect_path, argv, envp);
+            FREE(redirect_path, pathname);
+            return ret;
+        }
+    }
+    int ret = syscall(__NR_execve, pathname, argv, envp);
     FREE(redirect_path, pathname);
     return ret;
 }
@@ -658,13 +664,13 @@ void hook_dlopen(int api_level) {
         if (findSymbol("__dl__Z9do_dlopenPKciPK17android_dlextinfoPv", "linker",
                        (unsigned long *) &symbol) == 0) {
             ZzHookReplace(symbol, (void *) new_do_dlopen_V24,
-                           (void **) &orig_do_dlopen_V24);
+                          (void **) &orig_do_dlopen_V24);
         }
     } else if (api_level >= 19) {
         if (findSymbol("__dl__Z9do_dlopenPKciPK17android_dlextinfo", "linker",
                        (unsigned long *) &symbol) == 0) {
             ZzHookReplace(symbol, (void *) new_do_dlopen_V19,
-                           (void **) &orig_do_dlopen_V19);
+                          (void **) &orig_do_dlopen_V19);
         }
     } else {
         if (findSymbol("__dl_dlopen", "linker",

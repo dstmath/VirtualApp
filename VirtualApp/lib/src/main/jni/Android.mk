@@ -8,7 +8,6 @@ LOCAL_CFLAGS += -fno-rtti -fno-exceptions
 
 LOCAL_C_INCLUDES += $(MAIN_LOCAL_PATH)
 LOCAL_C_INCLUDES += $(MAIN_LOCAL_PATH)/Foundation
-LOCAL_C_INCLUDES += $(MAIN_LOCAL_PATH)/Substrate
 
 LOCAL_SRC_FILES := Core.cpp \
 				   Foundation/IOUniformer.cpp \
@@ -18,8 +17,7 @@ LOCAL_SRC_FILES := Core.cpp \
 				   Foundation/SandboxFs.cpp \
 
 LOCAL_LDLIBS := -llog
-LOCAL_STATIC_LIBRARIES := hookzz substrate
+LOCAL_STATIC_LIBRARIES := hookzz
 
 include $(BUILD_SHARED_LIBRARY)
 include $(MAIN_LOCAL_PATH)/HookZz/Android.mk
-include $(MAIN_LOCAL_PATH)/Substrate/Android.mk
